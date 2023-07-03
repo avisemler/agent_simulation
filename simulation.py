@@ -127,14 +127,20 @@ class Simulation:
                     value = self.actions[action].get_value(action_counts[action])
                     agent.update(value, action)
 
-        plt.plot(np.arange(self.timesteps), action_count_over_time)
+        for i in range(self.n_actions):
+            #plot a line for the ith action
+            plt.plot(np.arange(self.timesteps),
+              action_count_over_time[:,i],
+              label=self.actions[i].name
+            )
+        plt.legend(loc='upper right')
         plt.show()
 
 if __name__ == "__main__":
     Simulation(
-        actions=[RightGaussianCongestedAction("1", 200, 4, 120),
-        RightGaussianCongestedAction("2", 500, 1, 10),
-        RightGaussianCongestedAction("3", 400, 3, 100)],
+        actions=[RightGaussianCongestedAction("Bus", 200, 4, 120),
+        RightGaussianCongestedAction("Car", 500, 1, 10),
+        RightGaussianCongestedAction("Walk", 400, 3, 100)],
         agents=[400, 320],
         agent_parameters=[
             [(2, 0), (3, 0), (0.4, -4)],
@@ -142,4 +148,3 @@ if __name__ == "__main__":
         ],
         timesteps=200
     ).run()
-
