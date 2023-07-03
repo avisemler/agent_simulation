@@ -1,4 +1,3 @@
-#%%
 import random
 from typing import Callable
 
@@ -9,19 +8,28 @@ class Agent:
     optimal actions (in an environment with a single state)"""
 
     def __init__(self,
-            reward_function: Callable[float, float],
+            reward_parameters,
             action_count: int,
             learning_rate: float,
             discount_rate: float
         ):
         """
-        reward_function maps values to rewards, enabling different
-        agent types with different preferences
+        reward_parameters maps controls how values get mapped
+        to rewards, enabling different agent types with different
+        preferences. The structure is 
+
+        [(sensitivity for action 1, cost for action 1),
+         (sensitivity for action 2, cost for action 2),
+         ...
+         ]
+
+        and reward(action, value) = 
+            sensitivity_for_action * value - cost_for_action
 
         action_count is the number of possible actions that can
         be taken in the environment
         """
-        self.reward_function = reward_function
+        self.reward_parameters = reward_parameters
         self.action_count = action_count
         self.learning_rate = learning_rate
         self.discount_rate = discount_rate
@@ -47,7 +55,6 @@ class Agent:
         temperature_applied = self.q_values / temperature
         #add an epsilon in the division to avoid dividing by zero
         softmaxed = np.exp(temperature_applied) / np.sum(np.exp(temperature_applied) + 0.0001)
-        print(softmaxed)
         action = np.argmax(np.random.multinomial(1, softmaxed))
         self.previous_action = action
         return action
@@ -62,16 +69,22 @@ class Agent:
         #the action must be in the correct range
         assert previous_action < self.action_count
         
-        reward = self.reward_function(value)
+        reward = self.calculate_reward(previous_action, value)
         self.q_values[previous_action] = (
             (1-self.learning_rate) * self.q_values[previous_action]
             + self.learning_rate
             * (reward + self.discount_rate * np.max(self.q_values))
         )
 
+    def calculate_reward(self, action, value):
+        """Calculate the reward for an action given its value"""
+        sensitivity = self.reward_parameters[action][0]
+        cost = self.reward_parameters[action][1]
+        return sensitivity * value - cost
+
 if __name__ == "__main__":
     values = [1,2,3,7]
-    a = Agent(lambda x: x, 4, 0.1, 0.9)
+    a = Agent([(3, 1), (4, 3)], 2, 0.1, 0.9)
 
     for i in range(1000):
         action = a.select_action_softmax(2)

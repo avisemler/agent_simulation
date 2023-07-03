@@ -1,5 +1,3 @@
-#%%
-
 import math
 
 import matplotlib.pyplot as plt
@@ -59,7 +57,7 @@ class Simulation:
     def __init__(self,
         actions: list[Action],
         agents: list[int],
-        agent_parameters: tuple[int],
+        agent_parameters: tuple[tuple[int]],
         timesteps: int
     ):
         #create a list store agents
@@ -67,12 +65,9 @@ class Simulation:
         self.agents = []
         for i, agent_type_number in enumerate(agents):
             agents_of_current_type = []
-            #the value->reward function for agents of 
-            #the current type
-            current_agent_reward = lambda v: (agent_parameters[i][0] * v
-                + agent_parameters[i][1])
             for j in range(agent_type_number):
-                a = Agent(reward_function=current_agent_reward, 
+                #create an agent with parameters for agent group i
+                a = Agent(reward_parameters = agent_parameters[i],
                         action_count=len(actions),
                         learning_rate=LEARNING_RATE,
                         discount_rate=DISCOUNT_RATE
@@ -113,17 +108,17 @@ class Simulation:
 
         plt.plot(np.arange(self.timesteps), action_count_over_time)
         plt.show()
-        
 
-#%%
-Simulation(
-    actions=[GaussianCongestedAction(50, 300, 200),
-     GaussianCongestedAction(400, 40, 10),
-     GaussianCongestedAction(100, 800, 100)],
-    agents=[400, 320],
-    agent_parameters=[(2, 1),
-                    (5, -2)
-                    ],
-    timesteps=200
-).run()
-# %%
+if __name__ == "__main__":
+    Simulation(
+        actions=[GaussianCongestedAction(250, 300, 200),
+        GaussianCongestedAction(400, 150, 10),
+        GaussianCongestedAction(100, 800, 100)],
+        agents=[400, 320],
+        agent_parameters=[
+            [(2, 0), (3, 0), (0.4, -4)],
+            [(5, -2), (2, 0), (6, 4)],
+        ],
+        timesteps=200
+    ).run()
+    
