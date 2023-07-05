@@ -9,11 +9,13 @@ from agent import Agent
 
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
+COLOURS = ["blue", "red", "orange", "green", "purple"]
+RUN_COUNT = 200 #how often to display a plot of actions so far
 
 def gaussian_density(x, mu, sigma):
     result = math.exp(-0.5 * ( (x-mu)/sigma )** 2)
     result /= sigma * (2 * math.pi) ** 0.5
-    return result * 10000
+    return result
 
 class Action:
     def __init__(self, name):
@@ -72,7 +74,11 @@ class RightGaussianCongestedAction(Action):
             return self.left_tail_constant
         else:
             return gaussian_density(args[0], self.capacity, self.right_tail_sd)
-
+"""
+class BusAction(Action):
+    def get_value(self, *args):
+        if args[0] <= 
+"""
 class Simulation:
     """Runs a similation of agents that can take actions
     to use congested resources"""
@@ -102,7 +108,6 @@ class Simulation:
         self.n_actions = len(self.actions)
         self.n_agents = sum(agents)
         self.n_agent_types = len(agent_parameters)
-        print(self.n_agent_types)
 
         self.timesteps = timesteps
 
@@ -111,13 +116,14 @@ class Simulation:
         action_count_over_time = np.zeros((self.timesteps, self.n_agent_types, self.n_actions))
         
         for i in range(self.timesteps):
+            #print("iteration " + str(i))
             #count how many agents select each action
 
             #make each agent select an action
             for agent_type_number, agent_type in enumerate(self.agents):
                 action_counts = [0] * len(self.actions)
                 for agent in agent_type:
-                    action = agent.select_action_softmax(1.1)
+                    action = agent.select_action_epsilon_greedy(0.05)
                     action_counts[action] += 1
                 #record what the action counts were, so they can be plotted later
                 action_count_over_time[i][agent_type_number] = action_counts
@@ -125,14 +131,15 @@ class Simulation:
             #update the agents' based on the value of the actions they took
             for agent_type in self.agents:
                 for agent in agent_type:
-                    action = agent.previous_action      
-                    value = self.actions[action].get_value(action_counts[action]/self.n_agents)
+                    action = agent.previous_action
+                    #sum over all agent types to calculate how many chose this action
+                    number_choosing_this_action = np.sum(action_count_over_time[i], 0)[action]  
+                    value = self.actions[action].get_value(number_choosing_this_action/self.n_agents)
                     agent.update(value, action)
             
             #plot the action counts for each agent type and summed over the types
-            dimension = int(math.sqrt(self.n_agent_types) + 1) + 1
-            print(dimension)
-            if i % 100 == 0 and i > 0:
+            dimension = math.ceil(math.sqrt(self.n_agent_types + 1))
+            if i % RUN_COUNT == 0 and i > 0:
                 fig, axis = plt.subplots(dimension, dimension)
                 plot_count = 0
                 for agent_type in range(self.n_agent_types):
@@ -141,8 +148,9 @@ class Simulation:
                         x_coord = plot_count // dimension
                         y_coord = plot_count % dimension
                         axis[x_coord, y_coord].plot(np.arange(i),
-                        action_count_over_time[:i,agent_type,j],
-                        label=self.actions[j].name
+                            action_count_over_time[:i,agent_type,j],
+                            label=self.actions[j].name,
+                            color=COLOURS[j]
                         )
                         axis[x_coord, y_coord].set_title("Group " + str(agent_type + 1))
                     plot_count += 1
@@ -154,21 +162,33 @@ class Simulation:
                     y_coord = plot_count % dimension
                     axis[x_coord, y_coord].plot(np.arange(i),
                         summed_actions[:i,j],
-                        label=self.actions[j].name
+                        label=self.actions[j].name,
+                        color=COLOURS[j]
                     )
                     axis[x_coord, y_coord].set_title("Full population")
                 fig.legend(loc='upper right')
                 plt.show()
 
+    def plot_action_profiles(self):
+        """Plot how proportions are getting mapped to values for actions"""
+        steps = 1000
+        for number, action in enumerate(self.actions):
+            lines = np.zeros((steps))
+            for step in range(steps):
+                value = action.get_value(step/steps)
+                lines[step] = self.agents[2][0].calculate_reward(number, value)
+            time = np.arange(0, 1, 1/steps)
+            plt.plot(time, lines, color=COLOURS[number])
+        plt.show()
 
 if __name__ == "__main__":
     Simulation(
-        actions=[RightGaussianCongestedAction("Car", 0, 0, 0.4),
+        actions=[RightGaussianCongestedAction("Car", 0, 1, 0.4),
         RightGaussianCongestedAction("Bus", 0.4, 1.14, 0.35),
         ConstantAction("Walk", 1)],
         agents=[1000, 1000, 1000],
         agent_parameters=[
-            [(0, 1.3), (1, 0), (1, 0)],
+            [(1.3, 0), (1, 0), (1, 0)],
             [(1, 0.1), (1.35, 0.11), (1.4, 0)],
             [(1.4, -0.2), (0.7, 0), (0.8, 0)]
         ],

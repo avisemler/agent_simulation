@@ -42,8 +42,9 @@ class Agent:
 
     def select_action_epsilon_greedy(self, epsilon: float) -> int:
         """Return the action with greatest Q-value"""
-        if random.random() < epsilon:
-            action = np.argmax(self.q_values)
+        if random.random() > epsilon:
+            #break ties randomly
+            action = np.random.choice(np.flatnonzero(self.q_values == self.q_values.max()))
         else:
             action = np.random.randint(0, self.action_count)
         self.previous_action = action
@@ -63,8 +64,6 @@ class Agent:
     def update(self, value: float, previous_action: int):
         """Update Q-values after previous_action was taken,
         resulting in value
-        
-        use self.
         """
 
         #the action must be in the correct range
