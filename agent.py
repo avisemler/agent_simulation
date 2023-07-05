@@ -45,16 +45,17 @@ class Agent:
         if random.random() < epsilon:
             action = np.argmax(self.q_values)
         else:
-            #return action!!
-            action = np.random.choice(self.q_values)
+            action = np.random.randint(0, self.action_count)
         self.previous_action = action
         return action
 
     def select_action_softmax(self, temperature: float)-> int:
         assert temperature > 0
         temperature_applied = self.q_values / temperature
+        #bound values to avoid overflow
+        bounded = np.clip(temperature_applied, 0, 700)
         #add an epsilon in the division to avoid dividing by zero
-        softmaxed = np.exp(temperature_applied) / np.sum(np.exp(temperature_applied) + 0.0001)
+        softmaxed = np.exp(bounded) / np.sum(np.exp(bounded) + 0.0001)
         action = np.argmax(np.random.multinomial(1, softmaxed))
         self.previous_action = action
         return action
