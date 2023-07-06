@@ -82,6 +82,24 @@ class Agent:
         cost = self.reward_parameters[action][1]
         return sensitivity * value - cost
 
+class FixedAgent:
+    """An agent that always picks the same strategy."""
+    def __init__(self, action_to_pick):
+        self.action = action_to_pick
+        self.previous_action = action_to_pick
+
+    def select_action_epsilon_greedy(self, *args):
+        return self.action
+
+    def select_action_softmax(self, *args):
+        return self.action
+
+    def calculate_reward(self, *args):
+        pass
+
+    def update(self, *args):
+        pass
+
 if __name__ == "__main__":
     values = [1,2,3,7]
     a = Agent([(3, 1), (4, 3)], 2, 0.1, 0.9)

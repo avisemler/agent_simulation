@@ -5,12 +5,12 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-from agent import Agent
+from agent import Agent, FixedAgent
 
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
-RUN_COUNT = 200 #how often to display a plot of actions so far
+RUN_COUNT = 500 #how often to display a plot of actions so far
 
 def gaussian_density(x, mu, sigma):
     result = math.exp(-0.5 * ( (x-mu)/sigma )** 2)
@@ -74,11 +74,7 @@ class RightGaussianCongestedAction(Action):
             return self.left_tail_constant
         else:
             return gaussian_density(args[0], self.capacity, self.right_tail_sd)
-"""
-class BusAction(Action):
-    def get_value(self, *args):
-        if args[0] <= 
-"""
+
 class Simulation:
     """Runs a similation of agents that can take actions
     to use congested resources"""
@@ -181,12 +177,29 @@ class Simulation:
             plt.plot(time, lines, color=COLOURS[number])
         plt.show()
 
+class FixedAgentSimulation(Simulation):
+    """A simulation where some of the population are
+    fixed agents that always pick the same action."""
+
+    def __init__(self, actions, agents, n_fixed_agents,
+     fixed_agent_action, agent_parameters, timesteps):
+        super().__init__(actions, agents, agent_parameters, timesteps)
+        fixed_agents = []
+        for i in range(n_fixed_agents):
+            fixed_agents.append(FixedAgent(fixed_agent_action))
+
+        self.agents.append(fixed_agents)
+        self.n_agent_types += 1
+
 if __name__ == "__main__":
-    Simulation(
+    FixedAgentSimulation(
         actions=[RightGaussianCongestedAction("Car", 0, 1, 0.4),
-        RightGaussianCongestedAction("Bus", 0.4, 1.14, 0.35),
-        ConstantAction("Walk", 1)],
-        agents=[1000, 1000, 1000],
+            RightGaussianCongestedAction("Bus", 0.4, 1.14, 0.35),
+            ConstantAction("Walk", 1),
+        ],
+        n_fixed_agents=300,
+        fixed_agent_action=2,
+        agents=[900, 900, 900],
         agent_parameters=[
             [(1.3, 0), (1, 0), (1, 0)],
             [(1, 0.1), (1.35, 0.11), (1.4, 0)],
