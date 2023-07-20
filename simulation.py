@@ -8,9 +8,10 @@ import numpy as np
 from agent import Agent, FixedAgent
 
 LEARNING_RATE = 0.1
+TEMPERATURE = 0.05
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
-RUN_COUNT = 500 #how often to display a plot of actions so far
+RUN_COUNT = 1000 #how often to display a plot of actions so far
 
 def gaussian_density(x, mu, sigma):
     result = math.exp(-0.5 * ( (x-mu)/sigma )** 2)
@@ -112,27 +113,34 @@ class Simulation:
         action_count_over_time = np.zeros((self.timesteps, self.n_agent_types, self.n_actions))
         
         for i in range(self.timesteps):
-            #print("iteration " + str(i))
+            debug_print = (i%RUN_COUNT == 0 or (i+1)%RUN_COUNT == 0) and i>0
+            if debug_print:
+                print("iteration " + str(i))
             #count how many agents select each action
 
             #make each agent select an action
             for agent_type_number, agent_type in enumerate(self.agents):
                 action_counts = [0] * len(self.actions)
                 for agent in agent_type:
-                    action = agent.select_action_epsilon_greedy(0.05)
+                    action = agent.select_action_softmax(500/(i+1))
                     action_counts[action] += 1
                 #record what the action counts were, so they can be plotted later
                 action_count_over_time[i][agent_type_number] = action_counts
             
             #update the agents' based on the value of the actions they took
-            for agent_type in self.agents:
+            for agent_type_number, agent_type in enumerate(self.agents):
+                if debug_print:
+                    print("agent type:", agent_type_number)
                 for agent in agent_type:
                     action = agent.previous_action
                     #sum over all agent types to calculate how many chose this action
                     number_choosing_this_action = np.sum(action_count_over_time[i], 0)[action]  
                     value = self.actions[action].get_value(number_choosing_this_action/self.n_agents)
                     agent.update(value, action)
-            
+
+                    if debug_print:
+                        print(agent.previous_action, agent.q_values[0], agent.q_values[1], agent.q_values[2], sep=",")
+                    
             #plot the action counts for each agent type and summed over the types
             dimension = math.ceil(math.sqrt(self.n_agent_types + 1))
             if i % RUN_COUNT == 0 and i > 0:
@@ -192,14 +200,12 @@ class FixedAgentSimulation(Simulation):
         self.n_agent_types += 1
 
 if __name__ == "__main__":
-    FixedAgentSimulation(
+    Simulation(
         actions=[RightGaussianCongestedAction("Car", 0, 1, 0.4),
             RightGaussianCongestedAction("Bus", 0.4, 1.14, 0.35),
             ConstantAction("Walk", 1),
         ],
-        n_fixed_agents=300,
-        fixed_agent_action=2,
-        agents=[900, 900, 900],
+        agents=[1000, 1000, 1000],
         agent_parameters=[
             [(1.3, 0), (1, 0), (1, 0)],
             [(1, 0.1), (1.35, 0.11), (1.4, 0)],

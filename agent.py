@@ -42,6 +42,7 @@ class Agent:
 
     def select_action_epsilon_greedy(self, epsilon: float) -> int:
         """Return the action with greatest Q-value"""
+        #print(self.q_values)
         if random.random() > epsilon:
             #break ties randomly
             action = np.random.choice(np.flatnonzero(self.q_values == self.q_values.max()))
@@ -53,12 +54,20 @@ class Agent:
     def select_action_softmax(self, temperature: float)-> int:
         assert temperature > 0
         temperature_applied = self.q_values / temperature
-        #bound values to avoid overflow
-        bounded = np.clip(temperature_applied, 0, 700)
-        #add an epsilon in the division to avoid dividing by zero
-        softmaxed = np.exp(bounded) / np.sum(np.exp(bounded) + 0.0001)
-        action = np.argmax(np.random.multinomial(1, softmaxed))
+        #for numerical purposes, to avoid 0 division etc.
+        temperature_applied -= np.max(temperature_applied)
+        softmaxed = np.exp(temperature_applied) / np.sum(np.exp(temperature_applied))
+        #normalise to ensure sums to exactly 1
+        softmaxed /=  softmaxed.sum()
+        action = np.random.choice(np.arange(self.action_count), p=softmaxed)
         self.previous_action = action
+
+        """
+        if action == np.argmax(self.q_values):
+            print("exploiting, q-values:", self.q_values, "action:", action, "distribution:", softmaxed)
+        else:
+            print("exploring, q-values:", self.q_values, "action:", action, "distribution:", softmaxed)
+        """
         return action
     
     def update(self, value: float, previous_action: int):
