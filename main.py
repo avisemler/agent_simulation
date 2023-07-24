@@ -12,16 +12,16 @@ from simulation import Simulation
 
 AGENT_NUMBERS = [1000, 1000, 1000] #number of agents of each type
 #parameters (sensitivity and cost for each action) for each agent type
-INITIAL_AGENT_PARAMETERS =  [
-    [[1, 0], [1, 0], [1, 0]],
-    [[1, 0.1], [1.35, 0.11], [1.4, 0]],
-    [[1.4, -0.2], [0.7, 0], [0.8, 0]],
-]
+INITIAL_AGENT_PARAMETERS =  (
+    ((1, 0), (1, 0), (1, 0)),
+    ((1, 0.1), (1.35, 0.11), (1.4, 0)),
+    ((1.4, -0.2), (0.7, 0), (0.8, 0)),
+)
 
-LEARNING_RATE = 0.03
+LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
-PLOT_FREQUENCY = 2000  #how often to display a plot of actions so far
+PLOT_FREQUENCY = 500  #how often to display a plot of actions so far
 
 #the set of actions that agents can take
 actions = [RightGaussianCongestedAction("Car", 0, 1, 0.4),
@@ -39,7 +39,8 @@ for agent_type_number, amount in enumerate(AGENT_NUMBERS):
                 action_count=len(actions),
                 learning_rate=LEARNING_RATE,
                 discount_rate=DISCOUNT_RATE,
-                parameters = INITIAL_AGENT_PARAMETERS[agent_type_number],
+                parameters = [[a[0], a[1]] for a in INITIAL_AGENT_PARAMETERS[agent_type_number]],
+                group_number=agent_type_number
             )
         agents_of_current_type.append(a)
     agents.append(agents_of_current_type)
@@ -50,10 +51,17 @@ simulation = Simulation(
 )
 
 #create a graph to represent social connections of agents
-agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), 0.0018)
+agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), 0.0008)
 #subax1 = plt.subplot(121)
 #nx.draw(agent_graph, with_labels=False, font_weight='bold')
 #plt.show()
+
+#annotate nodes in the agent graph with agent objects
+current_index = 0
+for agent_type_number, amout in enumerate(AGENT_NUMBERS):
+    for i in range(amount):
+        agent_graph.nodes[current_index]["agent_object"] = agents[agent_type_number][i]
+        current_index += 1
 
 for i in range(100000):
     simulation.timestep()
@@ -65,3 +73,16 @@ for i in range(100000):
     #if a neighbour took that action in the previous timestep
     for agent_node in range(sum(AGENT_NUMBERS)):
         neighbours = agent_graph[agent_node]
+        bus_neighbours = 0
+        total_neighbours = 0
+        for key in neighbours:
+            total_neighbours += 1
+            if agent_graph.nodes[key]["agent_object"].previous_action == 1:
+                #this is a neighbour who took the bus
+                bus_neighbours += 1
+
+        if bus_neighbours:
+            #reduce the sensitivity to the bus's congestion
+            current_agent = agent_graph.nodes[agent_node]["agent_object"]
+            original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][1][0]
+            current_agent.reward_parameters[1][0] = original + 0.2*(bus_neighbours/total_neighbours)

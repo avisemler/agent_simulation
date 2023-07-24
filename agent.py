@@ -13,6 +13,7 @@ class Agent:
             learning_rate: float,
             discount_rate: float,
             parameters,
+            group_number: int,
         ):
         """
         action_count is the number of possible actions that can
@@ -29,11 +30,14 @@ class Agent:
 
         and reward(action, value) = 
             sensitivity_for_action * value - cost_for_action
+
+        group_number records which agent group this agent belongs to
         """
         self.action_count = action_count
         self.learning_rate = learning_rate
         self.discount_rate = discount_rate
         self.reward_parameters = parameters
+        self.group_number = group_number
 
         #record Q-values in an array
         self.q_values = np.zeros(action_count)
