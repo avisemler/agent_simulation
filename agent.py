@@ -5,34 +5,35 @@ import numpy as np
 
 class Agent:
     """An agent that uses Q-learning to learn to select
-    optimal actions (in an environment with a single state)"""
+    optimal actions (in an environment with a single state).
+    """
 
     def __init__(self,
-            reward_parameters,
             action_count: int,
             learning_rate: float,
-            discount_rate: float
+            discount_rate: float,
+            parameters,
         ):
         """
+        action_count is the number of possible actions that can
+        be taken in the environment
+
         reward_parameters maps controls how values get mapped
         to rewards, enabling different agent types with different
-        preferences. The structure is 
+        preferences that change over time. The structure is 
 
         [(sensitivity for action 1, cost for action 1),
-         (sensitivity for action 2, cost for action 2),
-         ...
-         ]
+            (sensitivity for action 2, cost for action 2),
+            ...
+            ]
 
         and reward(action, value) = 
             sensitivity_for_action * value - cost_for_action
-
-        action_count is the number of possible actions that can
-        be taken in the environment
         """
-        self.reward_parameters = reward_parameters
         self.action_count = action_count
         self.learning_rate = learning_rate
         self.discount_rate = discount_rate
+        self.reward_parameters = parameters
 
         #record Q-values in an array
         self.q_values = np.zeros(action_count)
@@ -67,7 +68,7 @@ class Agent:
     
     def update(self, value: float, previous_action: int):
         """Update Q-values after previous_action was taken,
-        resulting in value
+        resulting in value.
         """
 
         #the action must be in the correct range
