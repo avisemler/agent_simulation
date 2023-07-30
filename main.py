@@ -17,11 +17,18 @@ INITIAL_AGENT_PARAMETERS =  (
     ((1, 0.1), (1.35, 0.11), (1.4, 0)),
     ((1.4, -0.2), (0.7, 0), (0.8, 0)),
 )
+#entry [i][j] controls the strength of interaction from agents of group
+#i - WAIFW (who acquires influence from whom) matrix
+INFLUENCE_MATRIX = (
+    (2, 0.3, 0.3),
+    (2, 0.3, 0.3),
+    (2, 0.3, 0.3),
+)
 
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
-PLOT_FREQUENCY = 500  #how often to display a plot of actions so far
+PLOT_FREQUENCY = 2000  #how often to display a plot of actions so far
 
 #the set of actions that agents can take
 actions = [RightGaussianCongestedAction("Car", 0, 1, 0.4),
@@ -51,7 +58,7 @@ simulation = Simulation(
 )
 
 #create a graph to represent social connections of agents
-agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), 0.0008)
+agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), 0.08)
 #subax1 = plt.subplot(121)
 #nx.draw(agent_graph, with_labels=False, font_weight='bold')
 #plt.show()
@@ -69,20 +76,23 @@ for i in range(100000):
     if i % PLOT_FREQUENCY == 0 and i>0:
         simulation.plot_actions_over_time()
 
-    #lower each agent's sensitivity to an action's congestion
-    #if a neighbour took that action in the previous timestep
+    #propogate influence through the social graph
     for agent_node in range(sum(AGENT_NUMBERS)):
+        #retrieve the agent object associated with this node
+        current_agent = agent_graph.nodes[agent_node]["agent_object"]
         neighbours = agent_graph[agent_node]
-        bus_neighbours = 0
-        total_neighbours = 0
-        for key in neighbours:
-            total_neighbours += 1
-            if agent_graph.nodes[key]["agent_object"].previous_action == 1:
-                #this is a neighbour who took the bus
-                bus_neighbours += 1
 
-        if bus_neighbours:
-            #reduce the sensitivity to the bus's congestion
-            current_agent = agent_graph.nodes[agent_node]["agent_object"]
-            original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][1][0]
-            current_agent.reward_parameters[1][0] = original + 0.2*(bus_neighbours/total_neighbours)
+        #calculate the amount of influence this agent has towards each action
+        influence = np.zeros(len(actions))
+        for key in neighbours:
+            #retrieve the agent object of the neighbour
+            neighbour = agent_graph.nodes[key]["agent_object"]
+            influence[neighbour.previous_action] += INFLUENCE_MATRIX[neighbour.group_number][current_agent.group_number]
+        #normalise by dividing by the number of neighbours - having more
+        #neighbours shouldn't make you more susceptible to influence
+        influence /= len(neighbours)
+
+        #change sensitivities of agent to account for influences
+        for i in range(len(actions)):
+            original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][i][0]
+            current_agent.reward_parameters[1][0] = original + influence[i]
