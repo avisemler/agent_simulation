@@ -18,11 +18,11 @@ INITIAL_AGENT_PARAMETERS =  (
     ((1.4, -0.2), (0.7, 0), (0.8, 0)),
 )
 #entry [i][j] controls the strength of interaction from agents of group
-#i - WAIFW (who acquires influence from whom) matrix
+#i to agents of group j - WAIFW (who acquires influence from whom) matrix
 INFLUENCE_MATRIX = (
     (2, 0.3, 0.3),
     (2, 0.3, 0.3),
-    (2, 0.3, 0.3),
+    (5, 5, 5),
 )
 
 LEARNING_RATE = 0.1
@@ -58,7 +58,7 @@ simulation = Simulation(
 )
 
 #create a graph to represent social connections of agents
-agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), 0.08)
+agent_graph = nx.watts_strogatz_graph(sum(AGENT_NUMBERS), 25, 0.5)
 #subax1 = plt.subplot(121)
 #nx.draw(agent_graph, with_labels=False, font_weight='bold')
 #plt.show()
@@ -95,4 +95,4 @@ for i in range(100000):
         #change sensitivities of agent to account for influences
         for i in range(len(actions)):
             original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][i][0]
-            current_agent.reward_parameters[1][0] = original + influence[i]
+            current_agent.reward_parameters[i][0] = original + influence[i]
