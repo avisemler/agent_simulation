@@ -1,7 +1,9 @@
 import math
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import networkx as nx
 
 from agent import Agent, FixedAgent
 from actions import *
@@ -13,11 +15,16 @@ RUN_COUNT = 500 #how often to display a plot of actions so far
 
 class Simulation:
     """Runs a similation of agents that can take actions
-    to use congested resources"""
+    to use congested resources.
+    
+    Takes a list of actions, agent types (themselves lists of agents), and optionally a topology for the agents.
+    If there is a topology, then the congestion is calculated using only neighbours
+    of that node."""
 
     def __init__(self,
         actions: list[Action],
-        agents: list[Agent],
+        agents: list[list[Agent]],
+        topology: Optional[nx.classes.graph.Graph] = None
     ):
         #contains a sublist for each agent type
         self.agents = agents
@@ -32,6 +39,11 @@ class Simulation:
         #An array to record what actions where chosen at each timestep,
         #for use in plotting. The array grows each timestep
         self.action_count_over_time = np.zeros((0, self.n_agent_types, self.n_actions))
+
+        self.topology = topology
+        if self.topology:
+            #ensure that there is the correct number of vertices
+            assert self.topology.number_of_nodes() == sum([len(t) for t in self.agents])
 
     def timestep(self):
         """Perform one timestep of the simulation."""
@@ -55,17 +67,29 @@ class Simulation:
         self.action_count_over_time = temp
         
         #update the agents' based on the value of the actions they took
+        agent_index = 0 #calculate the index of this agent in the topology graph
         for agent_type_number, agent_type in enumerate(self.agents):
             for agent in agent_type:
                 action = agent.previous_action
-                #sum over all agent types to calculate how many chose this action
-                number_choosing_this_action = np.sum(self.action_count_over_time[-1], 0)[action]  
-                value = self.actions[action].get_value(number_choosing_this_action/self.n_agents)
+                if self.topology is None:
+                    #sum over all agent types to calculate how many chose this action
+                    #this is a straightforward calculation of congestion, without a topology
+                    number_choosing_this_action = np.sum(self.action_count_over_time[-1], 0)[action]  
+                    value = self.actions[action].get_value(number_choosing_this_action/self.n_agents)
+                elif self.topology:
+                    #use the topology: calculate congestion using only agents in the neighbourhood
+                    neighbours_choosing_this_action = 0
+                    for neighbour_key in self.topology[agent_index]:
+                        if self.topology.nodes[neighbour_key]["agent_object"].previous_action == action:
+                            neighbours_choosing_this_action += 1
+                        congestion = neighbours_choosing_this_action / len(self.topology[agent_index])
+                        value = self.actions[action].get_value(congestion)
                 agent.update(value, action)
+                agent_index += 1
     
         self.timesteps_so_far += 1
 
-    def plot_actions_over_time(self):
+    def plot_actions_over_time(self, title_suffix):
         """Display a matplotlib plot of the action counts over time."""
 
         #plot the action counts for each agent type and summed over the types
@@ -82,7 +106,7 @@ class Simulation:
                     label=self.actions[j].name,
                     color=COLOURS[j]
                 )
-                axis[x_coord, y_coord].set_title("Group " + str(agent_type + 1))
+                axis[x_coord, y_coord].set_title("Group " + str(agent_type + 1) + " " + title_suffix)
             plot_count += 1
 
         #plot the sum over all agent types too
@@ -95,7 +119,7 @@ class Simulation:
                 label=self.actions[j].name,
                 color=COLOURS[j]
             )
-            axis[x_coord, y_coord].set_title("Full population")
+            axis[x_coord, y_coord].set_title("Full population " + title_suffix)
         fig.legend(loc='upper right')
         plt.show()
 

@@ -13,7 +13,7 @@ class Agent:
             learning_rate: float,
             discount_rate: float,
             parameters,
-            group_number: int,
+            group_number: int = 0,
         ):
         """
         action_count is the number of possible actions that can
@@ -108,13 +108,3 @@ class FixedAgent:
 
     def update(self, *args):
         pass
-
-if __name__ == "__main__":
-    values = [1,2,3,7]
-    a = Agent([(3, 1), (4, 3)], 2, 0.1, 0.9)
-
-    for i in range(1000):
-        action = a.select_action_softmax(2)
-        a.update(values[action], action)
-
-    print(a.q_values)

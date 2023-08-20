@@ -20,15 +20,16 @@ INITIAL_AGENT_PARAMETERS =  (
 #entry [i][j] controls the strength of interaction from agents of group
 #i to agents of group j - WAIFW (who acquires influence from whom) matrix
 INFLUENCE_MATRIX = (
-    (2, 0.3, 0.3),
-    (2, 0.3, 0.3),
-    (5, 5, 5),
+    (2, 1.1, 1.1),
+    (2, 0.0, 2.1),
+    (1, 2, 1.1),
 )
+USE_AGENT_GRAPH = False
 
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
-PLOT_FREQUENCY = 2000  #how often to display a plot of actions so far
+PLOT_FREQUENCY = 40  #how often to display a plot of actions so far
 
 #the set of actions that agents can take
 actions = [RightGaussianCongestedAction("Car", 0, 1, 0.4),
@@ -52,47 +53,61 @@ for agent_type_number, amount in enumerate(AGENT_NUMBERS):
         agents_of_current_type.append(a)
     agents.append(agents_of_current_type)
 
+#create a topology
+topology = nx.complete_graph(sum(AGENT_NUMBERS))
+#annotate nodes in the topology with agent objects
+current_index = 0
+for agent_type_number, amount in enumerate(AGENT_NUMBERS):
+    for i in range(amount):
+        topology.nodes[current_index]["agent_object"] = agents[agent_type_number][i]
+        current_index += 1
+
 simulation = Simulation(
     actions=actions,
     agents=agents,
+    topology=None,
 )
 
 #create a graph to represent social connections of agents
-agent_graph = nx.watts_strogatz_graph(sum(AGENT_NUMBERS), 25, 0.5)
+agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), 2)
+title_string = "BA"
 #subax1 = plt.subplot(121)
 #nx.draw(agent_graph, with_labels=False, font_weight='bold')
 #plt.show()
 
 #annotate nodes in the agent graph with agent objects
 current_index = 0
-for agent_type_number, amout in enumerate(AGENT_NUMBERS):
+for agent_type_number, amount in enumerate(AGENT_NUMBERS):
     for i in range(amount):
         agent_graph.nodes[current_index]["agent_object"] = agents[agent_type_number][i]
         current_index += 1
 
 for i in range(100000):
+    print(i)
     simulation.timestep()
 
     if i % PLOT_FREQUENCY == 0 and i>0:
-        simulation.plot_actions_over_time()
+        simulation.plot_actions_over_time(title_string)
 
-    #propogate influence through the social graph
-    for agent_node in range(sum(AGENT_NUMBERS)):
-        #retrieve the agent object associated with this node
-        current_agent = agent_graph.nodes[agent_node]["agent_object"]
-        neighbours = agent_graph[agent_node]
+    if USE_AGENT_GRAPH:
+        #propogate influence through the social graph
+        for agent_node in range(sum(AGENT_NUMBERS)):
+            #retrieve the agent object associated with this node
+            current_agent = agent_graph.nodes[agent_node]["agent_object"]
+            neighbours = agent_graph[agent_node]
 
-        #calculate the amount of influence this agent has towards each action
-        influence = np.zeros(len(actions))
-        for key in neighbours:
-            #retrieve the agent object of the neighbour
-            neighbour = agent_graph.nodes[key]["agent_object"]
-            influence[neighbour.previous_action] += INFLUENCE_MATRIX[neighbour.group_number][current_agent.group_number]
-        #normalise by dividing by the number of neighbours - having more
-        #neighbours shouldn't make you more susceptible to influence
-        influence /= len(neighbours)
+            #calculate the amount of influence this agent has towards each action
+            influence = np.zeros(len(actions))
+            for key in neighbours:
+                #retrieve the agent object of the neighbour
+                neighbour = agent_graph.nodes[key]["agent_object"]
+                influence[neighbour.previous_action] += INFLUENCE_MATRIX[neighbour.group_number][current_agent.group_number]
+            #normalise by dividing by the number of neighbours - having more
+            #neighbours shouldn't make you more susceptible to influence
+            if len(neighbours) > 0:
+                influence /= len(neighbours)
 
-        #change sensitivities of agent to account for influences
-        for i in range(len(actions)):
-            original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][i][0]
-            current_agent.reward_parameters[i][0] = original + influence[i]
+            #change sensitivities of agent to account for influences
+            for i in range(len(actions)):
+                original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][i][0]
+                current_agent.reward_parameters[i][0] = original + influence[i]
