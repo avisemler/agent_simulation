@@ -1,6 +1,8 @@
 import math
 from typing import Optional
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
@@ -8,9 +10,10 @@ import networkx as nx
 from agent import Agent, FixedAgent
 from actions import *
 
+from constants import *
+
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
-COLOURS = ["blue", "red", "orange", "green", "purple"]
 RUN_COUNT = 500 #how often to display a plot of actions so far
 
 class Simulation:
@@ -55,7 +58,7 @@ class Simulation:
         for agent_type_number, agent_type in enumerate(self.agents):
             action_counts = [0] * len(self.actions)
             for agent in agent_type:
-                action = agent.select_action_epsilon_greedy(0.05)
+                action = agent.select_action_softmax(1 + 100/(self.timesteps_so_far**2 + 1))
                 action_counts[action] += 1
             #record what the action counts were, so they can be plotted later
             new_action_count_entry[agent_type_number] = action_counts
@@ -89,40 +92,6 @@ class Simulation:
     
         self.timesteps_so_far += 1
 
-    def plot_actions_over_time(self, title_suffix):
-        """Display a matplotlib plot of the action counts over time."""
-
-        #plot the action counts for each agent type and summed over the types
-        dimension = math.ceil(math.sqrt(self.n_agent_types + 1))
-        fig, axis = plt.subplots(dimension, dimension)
-        plot_count = 0
-        for agent_type in range(self.n_agent_types):
-            for j in range(self.n_actions):
-                #plot a line for the ith action
-                x_coord = plot_count // dimension
-                y_coord = plot_count % dimension
-                axis[x_coord, y_coord].plot(np.arange(self.timesteps_so_far),
-                    self.action_count_over_time[:,agent_type,j],
-                    label=self.actions[j].name,
-                    color=COLOURS[j]
-                )
-                axis[x_coord, y_coord].set_title("Group " + str(agent_type + 1) + " " + title_suffix)
-            plot_count += 1
-
-        #plot the sum over all agent types too
-        summed_actions = np.sum(self.action_count_over_time, 1)
-        for j in range(self.n_actions):
-            x_coord = plot_count // dimension
-            y_coord = plot_count % dimension
-            axis[x_coord, y_coord].plot(np.arange(self.timesteps_so_far),
-                summed_actions[:,j],
-                label=self.actions[j].name,
-                color=COLOURS[j]
-            )
-            axis[x_coord, y_coord].set_title("Full population " + title_suffix)
-        fig.legend(loc='upper right')
-        plt.show()
-
     def plot_action_profiles(self):
         """Plot how proportions are getting mapped to values for actions"""
         steps = 1000
@@ -134,6 +103,13 @@ class Simulation:
             time = np.arange(0, 1, 1/steps)
             plt.plot(time, lines, color=COLOURS[number])
         plt.show()
+
+    def save(self, directory):
+        if not os.path.exists(os.path.join("runs", directory)):
+            os.mkdir(os.path.join("runs", directory))
+        path = os.path.join("runs", directory, "data.npy")
+        with open(path, "wb") as f:
+            np.save(f, self.action_count_over_time)
 
 class FixedAgentSimulation(Simulation):
     """A simulation where some of the population are

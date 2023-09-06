@@ -1,4 +1,5 @@
 import math
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,11 +26,11 @@ INFLUENCE_MATRIX = (
     (1, 2, 1.1),
 )
 USE_AGENT_GRAPH = False
-
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
-PLOT_FREQUENCY = 40  #how often to display a plot of actions so far
+PLOT_FREQUENCY = 1_000  #how often to display a plot of actions so far
+TOTAL_TIMESTEPS = 40
 
 #the set of actions that agents can take
 actions = [RightGaussianCongestedAction("Car", 0, 1, 0.4),
@@ -82,12 +83,11 @@ for agent_type_number, amount in enumerate(AGENT_NUMBERS):
         agent_graph.nodes[current_index]["agent_object"] = agents[agent_type_number][i]
         current_index += 1
 
-for i in range(100000):
-    print(i)
+for i in range(TOTAL_TIMESTEPS):
     simulation.timestep()
 
-    if i % PLOT_FREQUENCY == 0 and i>0:
-        simulation.plot_actions_over_time(title_string)
+    #if i % PLOT_FREQUENCY == 0 and i>0:
+    #    simulation.plot_actions_over_time(title_string)
 
     if USE_AGENT_GRAPH:
         #propogate influence through the social graph
@@ -111,3 +111,5 @@ for i in range(100000):
             for i in range(len(actions)):
                 original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][i][0]
                 current_agent.reward_parameters[i][0] = original + influence[i]
+
+simulation.save("1")
