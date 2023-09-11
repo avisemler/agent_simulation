@@ -1,5 +1,6 @@
 import math
 import os
+import glob
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,10 +10,19 @@ from constants import *
 def plot_actions_over_time(directory, title, action_names):
     """Display a matplotlib plot of the action counts over time.
     This is loaded from an array stored in a .npy binary file,"""
-    filepath = os.path.join("runs", directory, "data.npy")
-    with open(filepath, "rb") as file:
-        action_count_over_time = np.load(file)
 
+    #average all the data found in the directory
+    filepath = os.path.join("runs", directory)
+    paths = glob.glob(os.path.join(filepath, "*.npy"))
+    summed = None
+    for path in paths:
+        with open(path, "rb") as file:
+            array = np.load(file)
+            if not summed:
+                summed = array
+            else:
+                summed += array
+    action_count_over_time = summed / len(paths)
 
     #the shape of the array contains information about parameters used
     n_agent_types = action_count_over_time.shape[1]
