@@ -101,7 +101,8 @@ class Simulation:
                 value = action.get_value(step/steps)
                 lines[step] = self.agents[2][0].calculate_reward(number, value)
             time = np.arange(0, 1, 1/steps)
-            plt.plot(time, lines, color=COLOURS[number])
+            plt.plot(time, lines, color=COLOURS[number], label=action.name)
+        plt.legend()
         plt.show()
 
     def save(self, directory):

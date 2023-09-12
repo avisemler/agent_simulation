@@ -30,7 +30,7 @@ LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
 PLOT_FREQUENCY = 1_000  #how often to display a plot of actions so far
-TOTAL_TIMESTEPS = 40
+TOTAL_TIMESTEPS = 20_000
 
 #the set of actions that agents can take
 actions = [RightGaussianCongestedAction("Car", 0, 1, 0.4),
@@ -68,6 +68,8 @@ simulation = Simulation(
     agents=agents,
     topology=None,
 )
+
+simulation.plot_action_profiles()
 
 #create a graph to represent social connections of agents
 agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), 2)

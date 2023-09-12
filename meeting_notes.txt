@@ -1,0 +1,3 @@
+power law, scale free, small world, newman, watts, strogatz, barabasi-alber - graphs to try
+
+barabasi - scale free
