@@ -165,3 +165,4 @@ runs/
 *.err
 *.out
 *.png
+*.sbatch
