@@ -1,5 +1,7 @@
 import math
+import random
 from typing import Optional
+import datetime
 
 import os
 
@@ -25,9 +27,9 @@ class Simulation:
     of that node."""
 
     def __init__(self,
-        actions: list[Action],
-        agents: list[list[Agent]],
-        topology: Optional[nx.classes.graph.Graph] = None
+        actions,
+        agents,
+        topology = None
     ):
         #contains a sublist for each agent type
         self.agents = agents
@@ -58,7 +60,7 @@ class Simulation:
         for agent_type_number, agent_type in enumerate(self.agents):
             action_counts = [0] * len(self.actions)
             for agent in agent_type:
-                action = agent.select_action_softmax(1 + 100/(self.timesteps_so_far**2 + 1))
+                action = agent.select_action_epsilon_greedy(0.05)
                 action_counts[action] += 1
             #record what the action counts were, so they can be plotted later
             new_action_count_entry[agent_type_number] = action_counts
@@ -102,13 +104,15 @@ class Simulation:
                 lines[step] = self.agents[2][0].calculate_reward(number, value)
             time = np.arange(0, 1, 1/steps)
             plt.plot(time, lines, color=COLOURS[number], label=action.name)
+        plt.xlabel("Congestion level")
+        plt.ylabel("Payoff")
         plt.legend()
-        plt.show()
+        plt.savefig("actions.png")
 
     def save(self, directory):
         if not os.path.exists(os.path.join("runs", directory)):
             os.mkdir(os.path.join("runs", directory))
-        path = os.path.join("runs", directory, "data.npy")
+        path = os.path.join("runs", directory, "data" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + "_" + str(random.randint(1, 1000)) + ".npy")
         with open(path, "wb") as f:
             np.save(f, self.action_count_over_time)
 

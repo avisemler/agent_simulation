@@ -40,7 +40,7 @@ class Agent:
         self.group_number = group_number
 
         #record Q-values in an array
-        self.q_values = np.array([0.0,0.0,1.0])
+        self.q_values = np.array([0.0,0.0,0.0])
 
         #record previous action
         self.previous_action = None

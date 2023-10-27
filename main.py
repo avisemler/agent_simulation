@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,29 +9,31 @@ import networkx as nx
 from agent import Agent, FixedAgent
 from actions import RightGaussianCongestedAction, ConstantAction
 from simulation import Simulation
+from get_params import *
 
-#some constants to control the simulation
-
+#settings to control the simulation
+args = get_args(*sys.argv[1:])
 AGENT_NUMBERS = [1000, 1000, 1000] #number of agents of each type
 #parameters (sensitivity and cost for each action) for each agent type
-INITIAL_AGENT_PARAMETERS =  (
-    ((1, 0), (1, 0), (1, 0)),
-    ((1, 0.1), (1.35, 0.11), (1.4, 0)),
-    ((1.4, -0.2), (0.7, 0), (0.8, 0)),
-)
+INITIAL_AGENT_PARAMETERS =  [
+    [[1.3, 0], [1, 0], [1, 0]],
+    [[1, 0.1], [1.35, 0.11], [1.4, 0]],
+    [[1.4, -0.2], [0.7, 0], [0.8, 0]],
+]
+
 #entry [i][j] controls the strength of interaction from agents of group
 #i to agents of group j - WAIFW (who acquires influence from whom) matrix
 INFLUENCE_MATRIX = (
-    (2, 1.1, 1.1),
-    (2, 0.0, 2.1),
-    (1, 2, 1.1),
+    (1, 0.3, 0.3),
+    (0.3, 1, 0.3),
+    (0.3, 0.3, 1),
 )
-USE_AGENT_GRAPH = False
+
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
 COLOURS = ["blue", "red", "orange", "green", "purple"]
 PLOT_FREQUENCY = 1_000  #how often to display a plot of actions so far
-TOTAL_TIMESTEPS = 20_000
+TOTAL_TIMESTEPS = args.total_timesteps
 
 #the set of actions that agents can take
 actions = [RightGaussianCongestedAction("Car", 0, 1, 0.4),
@@ -54,15 +57,6 @@ for agent_type_number, amount in enumerate(AGENT_NUMBERS):
         agents_of_current_type.append(a)
     agents.append(agents_of_current_type)
 
-#create a topology
-topology = nx.complete_graph(sum(AGENT_NUMBERS))
-#annotate nodes in the topology with agent objects
-current_index = 0
-for agent_type_number, amount in enumerate(AGENT_NUMBERS):
-    for i in range(amount):
-        topology.nodes[current_index]["agent_object"] = agents[agent_type_number][i]
-        current_index += 1
-
 simulation = Simulation(
     actions=actions,
     agents=agents,
@@ -72,8 +66,13 @@ simulation = Simulation(
 simulation.plot_action_profiles()
 
 #create a graph to represent social connections of agents
-agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), 2)
-title_string = "BA"
+if args.graph_gen == "ws":
+    agent_graph = nx.watts_strogatz_graph(sum(AGENT_NUMBERS), int(args.graph_param1), args.graph_param2)
+elif args.graph_gen == "er":
+    agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), args.graph_param1)
+elif args.graph_gen == "ba":
+    agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), args.graph_param1, args.graph_param2)
+
 #subax1 = plt.subplot(121)
 #nx.draw(agent_graph, with_labels=False, font_weight='bold')
 #plt.show()
@@ -88,12 +87,20 @@ for agent_type_number, amount in enumerate(AGENT_NUMBERS):
 for i in range(TOTAL_TIMESTEPS):
     simulation.timestep()
 
-    #if i % PLOT_FREQUENCY == 0 and i>0:
-    #    simulation.plot_actions_over_time(title_string)
+    for agent_node in range(sum(AGENT_NUMBERS)):
+        current_agent = agent_graph.nodes[agent_node]["agent_object"]
 
-    if USE_AGENT_GRAPH:
-        #propogate influence through the social graph
-        for agent_node in range(sum(AGENT_NUMBERS)):
+        if i == 6000 and args.intervention:
+            #apply intervention
+            current_agent.reward_parameters[0][1] += 1.2
+            INITIAL_AGENT_PARAMETERS[current_agent.group_number][0][1] += 1.2
+            if current_agent.group_number in [1,2]:
+                current_agent.reward_parameters[1][0] /= 3
+                INITIAL_AGENT_PARAMETERS[current_agent.group_number][1][0] /= 3
+
+        if args.use_agent_graph:
+            #propogate influence through the social graph
+
             #retrieve the agent object associated with this node
             current_agent = agent_graph.nodes[agent_node]["agent_object"]
             neighbours = agent_graph[agent_node]
@@ -114,4 +121,7 @@ for i in range(TOTAL_TIMESTEPS):
                 original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][i][0]
                 current_agent.reward_parameters[i][0] = original + influence[i]
 
-simulation.save("1")
+name = args.run_name
+if args.use_agent_graph:
+    name += "_" + str(args.graph_gen) + "_p1_" + str(args.graph_param1) + "_p2_" + str(args.graph_param2)
+simulation.save(name)
