@@ -71,7 +71,7 @@ if args.graph_gen == "ws":
 elif args.graph_gen == "er":
     agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), args.graph_param1)
 elif args.graph_gen == "ba":
-    agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), args.graph_param1, args.graph_param2)
+    agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), args.graph_param1)
 
 #subax1 = plt.subplot(121)
 #nx.draw(agent_graph, with_labels=False, font_weight='bold')

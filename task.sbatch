@@ -24,26 +24,10 @@ source /etc/profile.d/conda.sh
 for i in {0..4}; do
 echo "iteration $i"
 srun -n 2 python3 main.py --use_agent_graph=0 --total_timesteps=6000 --run_name=baseline
-srun -n 2 python3 main.py --graph_gen=er --graph_param1=0.0013 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ba --graph_param1=3000 --graph_param2=2 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ws --graph_param1=5 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ws --graph_param1=3 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ws --graph_param1=7 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ws --graph_param1=15 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ws --graph_param1=20 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ws --graph_param1=40 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=er --graph_param1=5 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=er --graph_param1=0.0005 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=er --graph_param1=0.001 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=er --graph_param1=0.0013 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=er --graph_param1=0.0019 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=er --graph_param1=0.0023 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ba --graph_param1=5 --graph_param2=0.1 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ba --graph_param1=1500 --graph_param2=2 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ba --graph_param1=2500 --graph_param2=2 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ba --graph_param1=3000 --graph_param2=2 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ba --graph_param1=3500 --graph_param2=2 --run_name=late_intervention
-srun -n 2 python3 main.py --graph_gen=ba --graph_param1=6000 --graph_param2=2 --run_name=late_intervention
-
-
+srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=er --graph_param1=0.00133377792 --total_timesteps=6000 --run_name=erdos_renyi_low
+srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=er --graph_param1=0.0053351117 --total_timesteps=6000 --run_name=erdos_renyi_high
+srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=ws --graph_param1=5 --graph_param2=0.1 --total_timesteps=6000 --run_name=watts_strogatz_low
+srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=er --graph_param1=17 --graph_param2=0.1 --total_timesteps=6000 --run_name=watts_strogatz_high
+srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=ba --graph_param1=2 --total_timesteps=6000 --run_name=barabasi_albert_low
+srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=ba --graph_param1=8 --total_timesteps=6000 --run_name=barabasi_albert_high
 done

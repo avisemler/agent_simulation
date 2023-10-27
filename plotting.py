@@ -22,11 +22,10 @@ def plot_actions_over_time(directory, title, action_names):
             array = np.load(file)
             arrays.append(array)
             if summed is None:
-                summed = array
+                summed = np.zeros_like(array)
             else:
                 summed += array
 
-    arrays = [arrays[0],]
     arrays = np.stack(arrays, axis=0)
     print("arrays shape:", arrays.shape)
     group_summed = np.sum(arrays, axis=-2) #sum over agent groups
@@ -80,7 +79,7 @@ def plot_actions_over_time(directory, title, action_names):
     handles, labels = fig.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     fig.legend(by_label.values(), by_label.keys(), loc="upper right")
-    plt.savefig(os.path.join("runs", directory, "aa_image.png"))
+    plt.savefig(os.path.join("runs", directory, "aa_image.png"), dpi=300)
 
-for name in ["late_interventioner_p1_0.0013_p2_0.1", "late_interventionws_p1_5.0_p2_0.1", "late_intervention_p1_7.0_p2_0.1", "late_intervention_p1_15.0_p2_0.1", "late_intervention_p1_20.0_p2_0.1", "late_intervention_p1_40.0_p2_0.1"]:
+for name in ["baseline"]:
     plot_actions_over_time(name, "", ["car", "bus", "wallk"])
