@@ -1,6 +1,7 @@
 import math
 import os
 import sys
+import json
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,7 +72,7 @@ if args.graph_gen == "ws":
 elif args.graph_gen == "er":
     agent_graph = nx.erdos_renyi_graph(sum(AGENT_NUMBERS), args.graph_param1)
 elif args.graph_gen == "ba":
-    agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), args.graph_param1)
+    agent_graph = nx.barabasi_albert_graph(sum(AGENT_NUMBERS), int(args.graph_param1))
 
 #subax1 = plt.subplot(121)
 #nx.draw(agent_graph, with_labels=False, font_weight='bold')
@@ -84,19 +85,22 @@ for agent_type_number, amount in enumerate(AGENT_NUMBERS):
         agent_graph.nodes[current_index]["agent_object"] = agents[agent_type_number][i]
         current_index += 1
 
-for i in range(TOTAL_TIMESTEPS):
+step = 0
+while step < args.total_timesteps:
+    step += 1
+
     simulation.timestep()
+    print("time:", step)
+
+    if step == 6000 and args.intervention:
+        #apply intervention
+        for g in [0,1,2]:
+            INITIAL_AGENT_PARAMETERS[current_agent.group_number][g][1] += 1.2
+            if g in [1,2]:
+                INITIAL_AGENT_PARAMETERS[current_agent.group_number][1][0] /= 3
 
     for agent_node in range(sum(AGENT_NUMBERS)):
-        current_agent = agent_graph.nodes[agent_node]["agent_object"]
-
-        if i == 6000 and args.intervention:
-            #apply intervention
-            current_agent.reward_parameters[0][1] += 1.2
-            INITIAL_AGENT_PARAMETERS[current_agent.group_number][0][1] += 1.2
-            if current_agent.group_number in [1,2]:
-                current_agent.reward_parameters[1][0] /= 3
-                INITIAL_AGENT_PARAMETERS[current_agent.group_number][1][0] /= 3
+        current_agent = agent_graph.nodes[agent_node]["agent_object"]            
 
         if args.use_agent_graph:
             #propogate influence through the social graph
@@ -117,11 +121,16 @@ for i in range(TOTAL_TIMESTEPS):
                 influence /= len(neighbours)
 
             #change sensitivities of agent to account for influences
-            for i in range(len(actions)):
-                original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][i][0]
-                current_agent.reward_parameters[i][0] = original + influence[i]
+            for action in range(len(actions)):
+                original = INITIAL_AGENT_PARAMETERS[current_agent.group_number][action][0]
+                current_agent.reward_parameters[action][0] = original + influence[action]
+
+        agent_node = 0
 
 name = args.run_name
 if args.use_agent_graph:
     name += "_" + str(args.graph_gen) + "_p1_" + str(args.graph_param1) + "_p2_" + str(args.graph_param2)
 simulation.save(name)
+
+with open("runs/" + name + "args.json", "w") as f:
+    f.write(json.dumps(vars(args)))

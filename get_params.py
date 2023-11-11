@@ -21,7 +21,7 @@ def get_args(*args):
     parser.add_argument("--graph_param2", default=0.1, type=float, help="")
     parser.add_argument("--run_name", default="new run", type=str, help="")
     parser.add_argument("--total_timesteps", default=12_000, type=int, help="")
-    parser.add_argument("--intervention", default="false", type=str2bool, help="")
+    parser.add_argument("--intervention", default="true", type=str2bool, help="")
 
     args = parser.parse_args(args)
 

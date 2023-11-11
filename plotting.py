@@ -23,6 +23,7 @@ def plot_actions_over_time(directory, title, action_names):
             arrays.append(array)
             if summed is None:
                 summed = np.zeros_like(array)
+                summed += array
             else:
                 summed += array
 
@@ -32,6 +33,7 @@ def plot_actions_over_time(directory, title, action_names):
     print("group summed shape:", group_summed.shape)
     print(group_summed[:,:,0])
     print("Standard deviation:", np.std(group_summed[:,:,0], axis=0).mean(axis=0))
+    print(summed)
     action_count_over_time = summed / len(paths)
 
     #the shape of the array contains information about parameters used
@@ -81,5 +83,6 @@ def plot_actions_over_time(directory, title, action_names):
     fig.legend(by_label.values(), by_label.keys(), loc="upper right")
     plt.savefig(os.path.join("runs", directory, "aa_image.png"), dpi=300)
 
-for name in ["baseline"]:
-    plot_actions_over_time(name, "", ["car", "bus", "wallk"])
+for name in glob.glob("./runs/*/"):
+    print(name.split("/")[-2])
+    plot_actions_over_time(name.split("/")[-2], "", ["car", "bus", "wallk"])
