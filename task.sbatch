@@ -23,12 +23,10 @@ source /etc/profile.d/conda.sh
 ## Execute your program(s) ##
 for i in {0..4}; do
 echo "iteration $i"
-#srun -n 2 python3 main.py --use_agent_graph=0 --run_name=late --intervention=1 --total_timesteps=12000
-#srun -n 2 python3 main.py --use_agent_graph=0 --total_timesteps=12000 --run_name=baseline
-srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=er --graph_param1=0.00133377792 --total_timesteps=12000 --run_name=erdos_renyi_low_late1
-srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=er --graph_param1=0.0053351117 --total_timesteps=12000 --run_name=erdos_renyi_high_late1
-srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=ws --graph_param1=5 --graph_param2=0.1 --total_timesteps=12000 --run_name=watts_strogatz_low_late1
-srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=ws --graph_param1=17 --graph_param2=0.1 --total_timesteps=12000 --run_name=watts_strogatz_high_late1
-srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=ba --graph_param1=2 --total_timesteps=12000 --run_name=barabasi_albert_low_late1
-srun -n 2 python3 main.py --use_agent_graph=1 --graph_gen=ba --graph_param1=8 --total_timesteps=12000 --run_name=barabasi_albert_high_late1
+srun -n 2 python3 main.py --intervention=0 --use_agent_graph=1 --graph_gen=er --graph_param1=0.00133377792 --total_timesteps=6000 --run_name=erdos_renyi_low_baseline
+srun -n 2 python3 main.py --intervention=0 --use_agent_graph=1 --graph_gen=er --graph_param1=0.0053351117 --total_timesteps=6000 --run_name=erdos_renyi_high_baseline
+srun -n 2 python3 main.py --intervention=0 --use_agent_graph=1 --graph_gen=ws --graph_param1=5 --graph_param2=0.1 --total_timesteps=6000 --run_name=watts_strogatz_baseline
+srun -n 2 python3 main.py --intervention=0 --use_agent_graph=1 --graph_gen=ws --graph_param1=17 --graph_param2=0.1 --total_timesteps=6000 --run_name=watts_strogatz_baseline
+srun -n 2 python3 main.py --intervention=0 --use_agent_graph=1 --graph_gen=ba --graph_param1=2 --total_timesteps=6000 --run_name=barabasi_albert_low_baseline
+srun -n 2 python3 main.py --intervention=0 --use_agent_graph=1 --graph_gen=ba --graph_param1=8 --total_timesteps=6000 --run_name=barabasi_albert_high_baseline
 done

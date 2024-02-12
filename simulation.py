@@ -110,9 +110,9 @@ class Simulation:
         plt.savefig("actions.png")
 
     def save(self, directory):
-        if not os.path.exists(os.path.join("runs", directory)):
-            os.mkdir(os.path.join("runs", directory))
-        path = os.path.join("runs", directory, "data" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + "_" + str(random.randint(1, 1000)) + ".npy")
+        if not os.path.exists(os.path.join("jan_runs", directory)):
+            os.mkdir(os.path.join("jan_runs", directory))
+        path = os.path.join("jan_runs", directory, "data" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + "_" + str(random.randint(1, 1000)) + ".npy")
         with open(path, "wb") as f:
             np.save(f, self.action_count_over_time)
 

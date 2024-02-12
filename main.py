@@ -24,11 +24,20 @@ INITIAL_AGENT_PARAMETERS =  [
 
 #entry [i][j] controls the strength of interaction from agents of group
 #i to agents of group j - WAIFW (who acquires influence from whom) matrix
+"""
 INFLUENCE_MATRIX = (
     (1, 0.3, 0.3),
     (0.3, 1, 0.3),
     (0.3, 0.3, 1),
 )
+"""
+
+INFLUENCE_MATRIX = (
+    (0.1, 0.03, 0.03),
+    (0.003, 0.1, 0.03),
+    (0.03, 0.03, 0.1),
+)
+
 
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.75
@@ -90,17 +99,26 @@ while step < args.total_timesteps:
     step += 1
 
     simulation.timestep()
-    print("time:", step)
 
-    if step == 6000 and args.intervention:
+    if step == 6000 and args.intervention and args.use_agent_graph:
         #apply intervention
-        for g in [0,1,2]:
-            INITIAL_AGENT_PARAMETERS[current_agent.group_number][g][1] += 1.2
-            if g in [1,2]:
-                INITIAL_AGENT_PARAMETERS[current_agent.group_number][1][0] /= 3
+        print(step, INITIAL_AGENT_PARAMETERS)
+
+        INITIAL_AGENT_PARAMETERS[0][2][0] *= 1.14
+        INITIAL_AGENT_PARAMETERS[2][2][0] *= 1.8
 
     for agent_node in range(sum(AGENT_NUMBERS)):
-        current_agent = agent_graph.nodes[agent_node]["agent_object"]            
+        current_agent = agent_graph.nodes[agent_node]["agent_object"]
+
+        if not args.use_agent_graph:
+            if step == 6000 and args.intervention:
+                #apply intervention to individual nodes when there is no agent graph,
+                #as changing intial params will have no effect
+                print(step, INITIAL_AGENT_PARAMETERS)
+                if current_agent.group_number == 0:
+                    current_agent.reward_parameters[2][0] *= 1.14
+                elif current_agent.group_number == 2:
+                    current_agent.reward_parameters[2][0] *= 1.8
 
         if args.use_agent_graph:
             #propogate influence through the social graph
@@ -132,5 +150,5 @@ if args.use_agent_graph:
     name += "_" + str(args.graph_gen) + "_p1_" + str(args.graph_param1) + "_p2_" + str(args.graph_param2)
 simulation.save(name)
 
-with open("runs/" + name + "args.json", "w") as f:
+with open("jan_runs/" + name + "args.json", "w") as f:
     f.write(json.dumps(vars(args)))
